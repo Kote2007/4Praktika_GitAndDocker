@@ -13,7 +13,7 @@ def duration_minutes(entry_time, exit_time):
     end = parse_time(exit_time)
 
     if end < start:
-        end += timedelta(days=1)
+        return end - start
 
     delta = end - start
     return int(delta.total_seconds() // 60)
