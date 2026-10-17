@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 env:
   IMAGE: python:3.11.10-slim
@@ -51,3 +53,23 @@ jobs:
             -e HOME=/tmp \
             "$IMAGE" \
             python scripts/check_utf8.py
+
+  unit_tests:
+    name: test
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run unit tests
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            -u "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -e PYTHONPATH=. \
+            "$IMAGE" \
+            python -m unittest discover -s tests -v
