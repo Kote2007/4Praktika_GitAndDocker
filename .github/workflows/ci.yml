@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE: python:3.11.10-slim
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version and commit
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            -u "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -e GITHUB_SHA \
+            -e GITHUB_RUN_ID \
+            "$IMAGE" \
+            bash -c 'python --version; echo "commit=$GITHUB_SHA"; echo "run_id=$GITHUB_RUN_ID"'
+
+      - name: Compile all Python files
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            -u "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            "$IMAGE" \
+            python -m compileall -q .
+
+      - name: Check UTF-8
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            -u "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            "$IMAGE" \
+            python scripts/check_utf8.py
